@@ -18,7 +18,7 @@ def inline_fabric(texts: dict[str, str], sizes = (2,), repeat = True) -> InlineK
     if isinstance(sizes, int):
         sizes = (sizes,)
 
-    return kb.adjust(*sizes, repeat=repeat).as_markup()
+    return cast(InlineKeyboardMarkup, kb.adjust(*sizes, repeat=repeat).as_markup())
 
 
 def keyboard_fabric(texts : tuple[str, ...], sizes : tuple[int, ...] | int, repeat = False) -> ReplyKeyboardMarkup:
