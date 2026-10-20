@@ -2,23 +2,20 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from sqlalchemy import exists, select
-from sqlalchemy.orm import selectinload
 
-from database.models import async_session, User, Profile
+from database.requests import profile_is_exist
 
 main_router = Router()
 
 @main_router.message(CommandStart()) # type: ignore
 async def start(message: Message, state: FSMContext):
-    async with async_session.begin() as session:
+    tg_id = message.from_user.id
 
-        query = await session.execute(
-            select(Profile)
-            .options(selectinload(Profile.user))
-            .where(User.tg_id == message.from_user.id)
-        )
+    print('RESULT::', await profile_is_exist(tg_id))
 
-    if query.scalar() is not None:
-        pass
+    if await profile_is_exist(tg_id):
+        print('Ты зареган')
+
+    print('Ты не зареган')
+
 
