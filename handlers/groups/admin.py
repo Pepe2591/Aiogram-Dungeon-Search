@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message
 
-from tools.filters import ChatTypeFilter
+from tools.filters import ChatTypeFilter, IsAdminAccessFilter
 
 group_admin_router = Router()
 
