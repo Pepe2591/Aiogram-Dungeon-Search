@@ -1,13 +1,14 @@
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from aiogram.fsm.state import State, StatesGroup
 
-from database.requests import get_profile, get_member, create_user, create_profile
+from database.requests import get_profile, create_user, create_profile
 
 from tools.filters import ChatTypeFilter
+from tools.images import reg_icon
 
 from config import text_reg
 from handlers.keyboards import keyboard_fabric
@@ -32,7 +33,7 @@ async def start(message: Message, state: FSMContext):
             txt_bts.append('💠 Клан')
         if not profile.member:
             txt_bts.append('🔎 Найти клан')
-        if profile.admin_rank > 0:
+        if profile.admin_role.level_access > 0:
             txt_bts.append('👮 Админ панель')
 
         txt_bts.append('⚙️ Настройки')
@@ -43,7 +44,7 @@ async def start(message: Message, state: FSMContext):
 
     else:
         await state.set_state(RegisterUser.nickname)
-        await message.answer(text_reg)
+        await message.answer_photo(photo=reg_icon, caption=text_reg)
 
 
 @main_router.message(RegisterUser.nickname)
@@ -57,7 +58,7 @@ async def reg_nickname(message: Message, state: FSMContext):
     await create_profile(message.from_user.id, message.text, 0)
     await state.clear()
     await message.answer(
-        'Вы успешно зарегистрировались!',
+        'Вы успешно авторизовались!',
         reply_markup=keyboard_fabric(
             ('🎩 Профиль', '🔎 Найти клан', '⚙️ Настройки'),
             2,
@@ -65,12 +66,6 @@ async def reg_nickname(message: Message, state: FSMContext):
         )
     )
 
-
-
-
-#Если профиля нет, мы будем устраивать регистрацию
-#А какую клавиатуру вставлять будем проверять через get_member
-#Если он уже участник клана то у него будет клавиатура с заявками в другие кланы
-#В противном случае будет просто раздел клан
-#Остальные кнопки можно придумать
-
+@main_router.message(Command('help'))
+async def show_help(message : Message):
+    pass
