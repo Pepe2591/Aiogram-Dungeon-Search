@@ -1,18 +1,18 @@
-from email import message
-
 from aiogram.types import Message
 from sqlalchemy import select, insert
 from sqlalchemy.orm import selectinload
 
-from database.models import async_session, Profile, User, Member, Clan, Role
+from database.models import async_session, Profile, User, Member, Clan, Role, AdminRole
 
 
 async def check_access(lvl_access : int, message : Message) -> bool:
     """Проверяет права человека по сообщению, если все в порядке пропускает его дальше"""
     async with async_session.begin() as session:
         req = await session.execute(
-            select(Profile.admin_rank)
-            .join(User, User.tg_id == message.from_user.id)
+            select(AdminRole.level_access)
+            .join(Profile, Profile.admin_role_fk == AdminRole.id)
+            .join(User, User.id == Profile.user_fk)
+            .where(User.tg_id == message.from_user.id)
         )
         result = req.scalar_one_or_none()
 
@@ -38,6 +38,7 @@ async def get_profile(tg_id: int) -> Profile | None:
             .options(
                 selectinload(Profile.user),
                 selectinload(Profile.member),
+                selectinload(Profile.admin_role),
             )
             .join(Profile.user)
             .where(User.tg_id == tg_id)
@@ -78,7 +79,7 @@ async def create_user(message: Message) -> User:
     return user
 
 
-async def create_profile(tg_id: int, nickname: str, admin_rank: int) -> Profile:
+async def create_profile(tg_id: int,  nickname: str, admin_role_id: int | None = None) -> Profile:
     """Создает профиль из полученных данных."""
     user = await get_user(tg_id)
 
@@ -90,13 +91,12 @@ async def create_profile(tg_id: int, nickname: str, admin_rank: int) -> Profile:
     async with async_session.begin() as session:
         profile = Profile(
             nickname=nickname,
-            admin_rank=admin_rank,
+            admin_role_fk=admin_role_id,
             user_fk=user.id,
         )
         session.add(profile)
 
     return profile
-
 
 async def create_member(tg_id: int, clan_id: int, profile_id: int, role_id: int) -> Member:
     """Создает участника клана."""
