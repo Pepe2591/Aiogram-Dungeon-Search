@@ -1,1 +1,1 @@
-#Место под будущие изображения
+reg_icon = 'AgACAgIAAxkBAAIF5GrfbUXvGo4vDR7qfW6sz5ttR5oSAAL9IWsbLxMBSzgkmGIUWIrKAQADAgADeQADPQQ'
