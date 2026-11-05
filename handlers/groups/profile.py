@@ -1,14 +1,11 @@
-import types
-
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
 
 from database.requests import get_profile
-
 from tools.filters import IsRegisteredFilter, ChatTypeFilter
-
 from config import text_profile, text_admin_profile
+from tools.utis import ollama_answer, split_text
 
 group_profile_router = Router()
 
@@ -16,6 +13,19 @@ group_profile_router.message.filter(
     ChatTypeFilter(['group', 'supergroup', 'channel']), # type: ignore
     IsRegisteredFilter()
 )
+
+@group_profile_router.message(F.text)
+async def answer_ai(message: Message):
+    if (
+        message.reply_to_message
+        and message.reply_to_message.from_user
+        and message.reply_to_message.from_user.id == 8657220790
+    ):
+        answer = await ollama_answer(message.text)
+
+        for chunk in split_text(answer):
+            await message.reply(chunk)
+
 
 @group_profile_router.message(F.text == 'u')
 async def u(message: Message):
