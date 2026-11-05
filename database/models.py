@@ -11,7 +11,7 @@ from sqlalchemy.sql import expression
 
 load_dotenv(find_dotenv(), override=True)
 
-engine = create_async_engine(os.getenv('SQLALHEMY_URL'), echo=True)
+engine = create_async_engine(os.getenv('SQLALHEMY_URL'))
 async_session = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 
@@ -50,7 +50,7 @@ class Profile(Base):
     user_fk: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
 
     admin_role_fk: Mapped[int | None] = mapped_column(
-        ForeignKey("admin_roles.id"), nullable=True
+        ForeignKey("admin_roles.id"),   nullable=True
     )
 
     def __repr__(self) -> str:
@@ -83,6 +83,7 @@ class Clan(Base):
     roles: Mapped[list['Role']] = relationship(back_populates="clan")
     members: Mapped[list['Member']] = relationship(back_populates="clan")
     threads: Mapped[list['Thread']] = relationship(back_populates="clan")
+    articles : Mapped[list[Article]] = relationship(back_populates='clan')
 
     owner_fk: Mapped[int] = mapped_column(ForeignKey("profiles.id"))
 
@@ -99,11 +100,10 @@ class Member(Base):
     profile: Mapped['Profile'] = relationship(back_populates="member")
     clan: Mapped['Clan'] = relationship(back_populates="members")
     role: Mapped['Role'] = relationship(back_populates="member")
-    # у участника может быть много данжей (Dungeon.owner_fk -> members.id)
+
     dungeons: Mapped[list['Dungeon']] = relationship(back_populates="owner")
     saved_messages: Mapped[list['SavedMessage']] = relationship(back_populates='member')
 
-    # unique: один профиль - один участник клана
     profile_fk: Mapped[int] = mapped_column(ForeignKey("profiles.id"), unique=True)
     clan_fk: Mapped[int] = mapped_column(ForeignKey("clans.id"))
     role_fk: Mapped[int] = mapped_column(ForeignKey('roles.id'))
@@ -144,6 +144,19 @@ class Thread(Base):
         return f"{self.title=}, {self.lvl=}, {self.clan_id=}"
 
 
+class Article(Base):
+    __tablename__ = "articles"
+
+
+    image : Mapped[str | None] = mapped_column(String(150), nullable=True)
+    title : Mapped[str | None] = mapped_column(String(100))
+    text : Mapped[str] = mapped_column()
+
+    clan : Mapped['Clan'] = relationship(back_populates='articles')
+    clan_fk : Mapped[int] = mapped_column(ForeignKey('clans.id'))
+
+
+
 class SavedMessage(Base):
     __tablename__ = "saved_messages"
 
@@ -164,7 +177,6 @@ class Dungeon(Base):
     content: Mapped[str | None] = mapped_column(String(255), nullable=True)
     lvl: Mapped[int] = mapped_column(SmallInteger)
 
-    # у данжа один владелец
     owner: Mapped['Member'] = relationship(back_populates='dungeons')
     owner_fk: Mapped[int] = mapped_column(ForeignKey("members.id"))
 
