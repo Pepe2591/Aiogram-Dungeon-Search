@@ -1,24 +1,49 @@
-import os
-from typing import cast
+import aiohttp
 
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
-
-
+from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv, find_dotenv
-from openai import OpenAI
+
 
 load_dotenv(find_dotenv(), override=True)
 
+class AdminAction(CallbackData, prefix='admin'):
+    name_action : str
+    lvl_access : int
 
-def response_text(text : str) -> str:
-    """Обращается к чат gpt через api_key и выдает текст"""
 
-    client = OpenAI(api_key=os.getenv('API_KEY'))
+def split_text(text: str, limit: int = 4000) -> list[str]:
+    chunks = []
 
-    response = client.responses.create(
-    model="gpt-6-astra",
-    input=text,
-)
-    return response.output_text
-         
+    while len(text) > limit:
+        split_index = text.rfind('\n', 0, limit)
+
+        if split_index == -1:
+            split_index = text.rfind(' ', 0, limit)
+
+        if split_index == -1:
+            split_index = limit
+
+        chunks.append(text[:split_index])
+        text = text[split_index:].lstrip()
+
+    if text:
+        chunks.append(text)
+
+    return chunks
+
+async def ollama_answer(
+        prompt : str, url = 'http://localhost:11434/api/generate', model = 'qwen3:8b',
+        think = False, stream = False):
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+                url,
+                json={
+                    "model" : model,
+                    "prompt" : prompt,
+                    "think" : think,
+                    "stream" : stream
+                }
+        ) as response:
+            result = await response.json()
+            return result['response']
