@@ -33,7 +33,7 @@ async def show_settings(message : Message):
 
 @infc_profile_router.message(F.text == '⚙️ Настройки')
 async def show_settings(message : Message):
-    await message.answer('Привет')
+    await message.answer('Empty text')
 
 
 @infc_profile_router.message(F.text == '🎩 Профиль')
