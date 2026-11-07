@@ -1,13 +1,14 @@
-import types
-
 from aiogram import Router, F
 from aiogram.types import Message
 
-from database.models import Clan
-from tools.filters import IsRegisteredFilter, ChatTypeFilter
-from config import text_profile, text_admin_profile
+from sqlalchemy import select
 
+from tools.filters import IsRegisteredFilter, ChatTypeFilter,IsMemberFilter
+from config import TEXT_PROFILE, TEXT_ADMIN_PROFILE
+
+from database.models import async_session, Clan
 from database.requests import get_profile
+
 
 infc_profile_router = Router()
 
@@ -15,6 +16,25 @@ infc_profile_router.message.filter(
     ChatTypeFilter('private'), # type: ignore
     IsRegisteredFilter() # type: ignore
 )
+
+@infc_profile_router.message(F.text == '🔎 Найти клан', ~IsMemberFilter())
+async def show_settings(message : Message):
+
+    async with async_session.begin() as session:
+        req = await session.scalars(
+            select(Clan)
+        )
+        clans = req.all()
+
+    if clans:
+        text = 'Бла-бла'
+    else:
+        await message.answer('Пока нет доступных кланов 🙌')
+
+@infc_profile_router.message(F.text == '⚙️ Настройки')
+async def show_settings(message : Message):
+    await message.answer('Привет')
+
 
 @infc_profile_router.message(F.text == '🎩 Профиль')
 async def show_profile(message: Message):
@@ -26,7 +46,7 @@ async def show_profile(message: Message):
 
     if profile.admin_role:
         await message.answer(
-            text_admin_profile.format(
+            TEXT_ADMIN_PROFILE.format(
                 profile.nickname,
                 clan_name,
                 role_name,
@@ -37,7 +57,7 @@ async def show_profile(message: Message):
         )
     else:
         await message.answer(
-            text_profile.format(
+            TEXT_PROFILE.format(
                 profile.nickname,
                 clan_name,
                 role_name,
