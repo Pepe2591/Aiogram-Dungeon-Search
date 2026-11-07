@@ -46,7 +46,6 @@ class Profile(Base):
     member: Mapped['Member | None'] = relationship(back_populates="profile")
     admin_role: Mapped['AdminRole | None'] = relationship(back_populates="profiles")
 
-    # unique: на одного пользователя не больше одного профиля
     user_fk: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
 
     admin_role_fk: Mapped[int | None] = mapped_column(
@@ -68,7 +67,7 @@ class AdminRole(Base):
     profiles: Mapped[list['Profile']] = relationship(back_populates="admin_role")
 
     def __repr__(self) -> str:
-        return f"{self.name}, {self.level_access=}, {self.description=}"
+        return f"{self.name=}, {self.level_access=}, {self.description=}"
 
 
 class Clan(Base):
@@ -77,13 +76,11 @@ class Clan(Base):
     name: Mapped[str] = mapped_column(String(30))
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    # id супергруппы (-100XXXXXXXXXX) занимает 14 символов, берём с запасом
     tg_group_id: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
 
     roles: Mapped[list['Role']] = relationship(back_populates="clan")
     members: Mapped[list['Member']] = relationship(back_populates="clan")
     threads: Mapped[list['Thread']] = relationship(back_populates="clan")
-    articles : Mapped[list[Article]] = relationship(back_populates='clan')
 
     owner_fk: Mapped[int] = mapped_column(ForeignKey("profiles.id"))
 
@@ -109,7 +106,6 @@ class Member(Base):
     role_fk: Mapped[int] = mapped_column(ForeignKey('roles.id'))
 
     def __repr__(self) -> str:
-        # не обращаемся к self.profile: в async это вызовет MissingGreenlet
         return f"{self.id=}, {self.profile_fk=}, {self.is_banned=}, {self.is_muted=}"
 
 
@@ -126,7 +122,7 @@ class Role(Base):
     clan_fk: Mapped[int] = mapped_column(ForeignKey("clans.id"))
 
     def __repr__(self) -> str:
-        return f"{self.name}, {self.level_access=}, {self.description=}"
+        return f"{self.name=}, {self.level_access=}, {self.description=}"
 
 
 class Thread(Base):
@@ -155,6 +151,9 @@ class Article(Base):
     clan : Mapped['Clan'] = relationship(back_populates='articles')
     clan_fk : Mapped[int] = mapped_column(ForeignKey('clans.id'))
 
+    def __repr__(self) -> str:
+        return f"{self.title=}, {self.text=}, {self.clan_fk=}"
+
 
 
 class SavedMessage(Base):
@@ -167,7 +166,7 @@ class SavedMessage(Base):
     member_fk: Mapped[int] = mapped_column(ForeignKey("members.id"))
 
     def __repr__(self) -> str:
-        return f"{self.member_fk}, {self.content}"
+        return f"{self.member_fk=}, {self.content=}"
 
 
 class Dungeon(Base):
@@ -181,7 +180,7 @@ class Dungeon(Base):
     owner_fk: Mapped[int] = mapped_column(ForeignKey("members.id"))
 
     def __repr__(self) -> str:
-        return f"{self.content}, {self.lvl}"
+        return f"{self.content=}, {self.lvl=}"
 
 
 async def async_main():
