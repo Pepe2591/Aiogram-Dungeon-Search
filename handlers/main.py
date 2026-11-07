@@ -10,7 +10,7 @@ from database.requests import get_profile, create_user, create_profile
 from tools.filters import ChatTypeFilter
 from tools.images import reg_icon
 
-from config import text_reg
+from config import TEXT_REG
 from handlers.keyboards import keyboard_fabric
 
 main_router = Router()
@@ -44,7 +44,7 @@ async def start(message: Message, state: FSMContext):
 
     else:
         await state.set_state(RegisterUser.nickname)
-        await message.answer_photo(photo=reg_icon, caption=text_reg)
+        await message.answer_photo(photo=reg_icon, caption=TEXT_REG)
 
 
 @main_router.message(RegisterUser.nickname)
@@ -66,6 +66,3 @@ async def reg_nickname(message: Message, state: FSMContext):
         )
     )
 
-@main_router.message(Command('help'))
-async def show_help(message : Message):
-    pass
