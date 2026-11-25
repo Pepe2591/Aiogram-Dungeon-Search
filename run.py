@@ -18,10 +18,10 @@ async def main():
     await async_main()
     dp = Dispatcher()
 
-    dp.include_routers(group_member_router, group_admin_router,
-                       group_profile_router,infc_admin_router,
-                       infc_profile_router, infc_member_router,
-                       main_router)
+    dp.include_routers(
+        group_member_router, group_admin_router, group_profile_router,
+        infc_admin_router,infc_profile_router, infc_member_router,
+        main_router)
 
     await dp.start_polling(bot)
 

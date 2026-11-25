@@ -4,8 +4,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from aiogram.fsm.state import State, StatesGroup
+from database.models import async_session, Profile, Member, User
 
-from database.requests import get_profile, create_user, create_profile
+from database.requests import create_user, create_profile
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
 
 from tools.filters import ChatTypeFilter
 from tools.images import reg_icon
@@ -24,16 +27,28 @@ async def start(message: Message, state: FSMContext):
     await state.clear()
     tg_id = message.from_user.id
 
-    profile = await get_profile(tg_id)
+    async with async_session.begin() as session:
+        user = await session.scalar(
+            select(Profile)
+            .join(User)
+            .where(User.tg_id == tg_id)
+            .options(
+                selectinload(Profile.admin_role),
+                selectinload(Profile.member)
+                .options(
+                    selectinload(Member.clan)
+                    )
+                )
+            )
 
-    if profile:
+    if user:
         txt_bts = ['🎩 Профиль']
 
-        if profile.member:
+        if user.member:
             txt_bts.append('💠 Клан')
-        if not profile.member:
+        if not user.member:
             txt_bts.append('🔎 Найти клан')
-        if profile.admin_role.level_access > 0:
+        if user.admin_role.level_access > 0:
             txt_bts.append('👮 Админ панель')
 
         txt_bts.append('⚙️ Настройки')

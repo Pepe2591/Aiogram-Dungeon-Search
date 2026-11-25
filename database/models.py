@@ -29,6 +29,8 @@ class User(Base):
 
     first_name: Mapped[str] = mapped_column(String(50))
     last_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    username: Mapped[str | None] = mapped_column(String(32), index=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
 
     profile: Mapped['Profile | None'] = relationship(back_populates="user")
@@ -45,6 +47,7 @@ class Profile(Base):
     user: Mapped['User'] = relationship(back_populates="profile")
     member: Mapped['Member | None'] = relationship(back_populates="profile")
     admin_role: Mapped['AdminRole | None'] = relationship(back_populates="profiles")
+    applications : Mapped[list['Application']] = relationship(back_populates="profile")
 
     user_fk: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
 
@@ -81,11 +84,23 @@ class Clan(Base):
     roles: Mapped[list['Role']] = relationship(back_populates="clan")
     members: Mapped[list['Member']] = relationship(back_populates="clan")
     threads: Mapped[list['Thread']] = relationship(back_populates="clan")
+    articles : Mapped[list['Article']] = relationship(back_populates="clan")
+    applications : Mapped[list['Application']] = relationship(back_populates="clan")
+    help_message : Mapped['HelpMessage'] = relationship(back_populates='clan')
 
     owner_fk: Mapped[int] = mapped_column(ForeignKey("profiles.id"))
 
     def __repr__(self) -> str:
         return f"{self.id=}, {self.name=}, {self.description=}, {self.tg_group_id=}, {self.owner_fk=}"
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    profile : Mapped['Profile'] = relationship(back_populates="applications")
+    clan : Mapped['Clan'] = relationship(back_populates='applications')
+
+    profile_fk : Mapped[int] = mapped_column(ForeignKey("profiles.id"), unique=True)
+    clan_fk : Mapped[int] = mapped_column(ForeignKey('clans.id'), unique=True)
 
 
 class Member(Base):
@@ -139,6 +154,15 @@ class Thread(Base):
     def __repr__(self) -> str:
         return f"{self.title=}, {self.lvl=}, {self.clan_id=}"
 
+
+class HelpMessage(Base):
+    __tablename__ = "help_messages"
+
+    image : Mapped[str] = mapped_column(String(150))
+    text : Mapped[str] = mapped_column()
+
+    clan_fk : Mapped[int] = mapped_column(ForeignKey("clans.id"))
+    clan : Mapped['Clan'] = relationship(back_populates="help_message")
 
 class Article(Base):
     __tablename__ = "articles"

@@ -19,12 +19,31 @@ async def check_access(lvl_access : int, message : Message) -> bool:
         return result is not None and result >= lvl_access
 
 
+async def get_all_user(tg_id: int) -> User | None:
+    async with async_session() as session:
+        user = await session.scalar(
+            select(User)
+            .where(User.tg_id == tg_id)
+            .options(
+                selectinload(User.profile)
+                .options(
+                    selectinload(Profile.admin_role),
+                    selectinload(Profile.member)
+                    .options(
+                        selectinload(Member.clan),
+                        selectinload(Member.role)
+                    )
+                )
+            )
+        )
+
+    return user
+
 async def get_user(tg_id: int) -> User | None:
     """Возвращает пользователя по tg_id или None."""
     async with async_session() as session:
         req = await session.execute(
             select(User)
-            .options(selectinload(User.profile))
             .where(User.tg_id == tg_id)
         )
         return req.scalar_one_or_none()
@@ -35,11 +54,6 @@ async def get_profile(tg_id: int) -> Profile | None:
     async with async_session() as session:
         req = await session.execute(
             select(Profile)
-            .options(
-                selectinload(Profile.user),
-                selectinload(Profile.member),
-                selectinload(Profile.admin_role),
-            )
             .join(Profile.user)
             .where(User.tg_id == tg_id)
         )
@@ -51,11 +65,6 @@ async def get_member(tg_id: int) -> Member | None:
     async with async_session() as session:
         req = await session.execute(
             select(Member)
-            .options(
-                selectinload(Member.profile),
-                selectinload(Member.clan),
-                selectinload(Member.role),
-            )
             .join(Member.profile)
             .join(Profile.user)
             .where(User.tg_id == tg_id)
